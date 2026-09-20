@@ -6,7 +6,9 @@ with Ada.Command_Line;
 with Ada.Text_IO; use Ada.Text_IO;
 with DPLL; use DPLL;
 
-procedure Tests is
+procedure Tests
+  with SPARK_Mode => Off
+is
 
    Pass_Count : Natural := 0;
    Fail_Count : Natural := 0;

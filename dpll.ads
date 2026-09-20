@@ -11,7 +11,7 @@
 pragma Ada_2022;
 
 package DPLL
-  with SPARK_Mode => Off
+  with SPARK_Mode => On
 is
 
    ---------------------------------------------------------------------------
@@ -70,6 +70,12 @@ is
       Lits   : Literal_Bag  := [others => 0];
    end record;
 
+   --  Well-formed clause: no zero literals in 1 .. Length (SPARK L2 bar).
+   function Valid_Clause (C : Clause) return Boolean
+     with Global => null,
+          Ghost  => True;
+
+
    ---------------------------------------------------------------------------
    -- Exceptions
    ---------------------------------------------------------------------------
@@ -124,12 +130,14 @@ is
    --  Empty formula (0 vars, 0 clauses) — vacuously satisfiable.
 
    procedure Set_Num_Vars (F : in out Formula; N : Variable_Count)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  Set variable universe size; does not clear clauses.
    --  Raises Invalid_Argument if an existing literal refers past N.
 
    procedure Add_Clause (F : in out Formula; C : Clause)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  Append clause C (empty clause allowed → immediate unsat later).
    --  Raises Capacity_Exceeded at Max_Clauses.
    --  Raises Invalid_Argument on zero literal, duplicate |lit| in C,
@@ -140,11 +148,13 @@ is
      (F    : in out Formula;
       Lits : Literal_List;
       Len  : Clause_Length)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  Convenience wrapper around Add_Clause.
 
    procedure From_DIMACS_Lite (F : out Formula; Text : String)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  Tiny DIMACS CNF subset: optional "p cnf <vars> <clauses>", then
    --  lines of integers ending in 0; "c" comments and blank lines ok.
    --  Raises Parse_Error / Capacity_Exceeded / Invalid_Argument.
@@ -189,7 +199,8 @@ is
      (A   : in out Assignment;
       L   : Literal;
       Ok  : out Boolean)
-     with Global => null;
+     with Global => null,
+          Pre    => L /= 0;
    --  Force L true. Ok=False on conflicting re-assignment.
 
    procedure Unit_Propagate
@@ -203,7 +214,8 @@ is
      (F     : Formula;
       A     : Assignment;
       Pures : out Pure_List)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  Literals that appear with only one polarity among still-active
    --  (unsatisfied) clauses; only for currently unassigned variables.
 
@@ -211,48 +223,58 @@ is
      (F        : Formula;
       A        : in out Assignment;
       Conflict : out Boolean)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  Assign all current pure literals (then optional unit cascade).
 
    function Choose_Variable (F : Formula; A : Assignment) return Variable_Count
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  Smallest unassigned variable that still occurs in an unsatisfied
    --  clause; 0 if none (formula satisfied or no open vars).
 
    function Solve (F : Formula) return Solve_Result
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  Classical DPLL: unit → pure → branch true/false with backtrack.
    --  Returns Satisfiable with a total model on used vars, or Unsatisfiable.
 
    function Is_Satisfiable (F : Formula) return Boolean
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
 
    ---------------------------------------------------------------------------
    -- Classic tiny examples
    ---------------------------------------------------------------------------
 
    procedure Build_Two_Clause_Sat (F : out Formula)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  (a ∨ b) ∧ (¬a ∨ b) — satisfiable; forces b.
 
    procedure Build_Contradictory_Units (F : out Formula)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  (a) ∧ (¬a) — unsatisfiable.
 
    procedure Build_Empty_Clause (F : out Formula)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  One empty clause — unsatisfiable.
 
    procedure Build_Empty_Formula (F : out Formula)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  No clauses — vacuously satisfiable.
 
    procedure Build_Small_3SAT_Sat (F : out Formula)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  Tiny satisfiable 3-SAT toy (3 vars, 4 clauses).
 
    procedure Build_Small_3SAT_Unsat (F : out Formula)
-     with Global => null;
+     with Global => null,
+          SPARK_Mode => Off;
    --  Tiny unsatisfiable 3-SAT / pigeon toy.
 
 end DPLL;

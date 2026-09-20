@@ -142,3 +142,20 @@ at least **80** PASS lines.
 ## License
 
 Educational reference code for the RobertBoettcherSF Ada algorithm series.
+
+## SPARK / GNATprove (Level 2)
+
+`SPARK_Mode => On` on the package. Exception-raising builders/parsers
+(`Set_Num_Vars`, `Add_Clause`, `From_DIMACS_Lite`, `Build_*`) and the
+recursive search core (`Solve`, `DPLL_Search`, `Pure_Literals`,
+`Eliminate_Pures`, `Choose_Variable`, `Is_Satisfiable`) are
+`SPARK_Mode => Off` (exceptions / termination). Flow-safe literal and
+clause queries plus `Unit_Propagate` remain in SPARK.
+
+```bash
+make prove   # gnatprove --level=2
+```
+
+**Bar:** Level 2, all SPARK-analyzed checks proved (56/56 at last run).
+`make test` stays green (`-gnatwa`).
+

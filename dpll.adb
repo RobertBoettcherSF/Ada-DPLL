@@ -5,7 +5,7 @@ pragma Ada_2022;
 with Ada.Characters.Handling;
 
 package body DPLL
-  with SPARK_Mode => Off
+  with SPARK_Mode => On
 is
 
    ---------------------------------------------------------------------
@@ -78,6 +78,7 @@ is
    procedure Validate_And_Absorb_Clause
      (F : in out Formula;
       C : Clause)
+   with SPARK_Mode => Off
    is
       Seen : array (Variable_Id) of Boolean := [others => False];
       V    : Variable_Id;
@@ -113,7 +114,8 @@ is
       F := (Num_Vars => 0, Num_Clauses => 0, Clauses => [others => <>]);
    end Clear;
 
-   procedure Set_Num_Vars (F : in out Formula; N : Variable_Count) is
+   procedure Set_Num_Vars (F : in out Formula; N : Variable_Count)
+   with SPARK_Mode => Off is
    begin
       for C in 1 .. F.Num_Clauses loop
          for I in 1 .. F.Clauses (C).Length loop
@@ -125,7 +127,8 @@ is
       F.Num_Vars := N;
    end Set_Num_Vars;
 
-   procedure Add_Clause (F : in out Formula; C : Clause) is
+   procedure Add_Clause (F : in out Formula; C : Clause)
+   with SPARK_Mode => Off is
    begin
       if F.Num_Clauses = Max_Clauses then
          raise Capacity_Exceeded;
@@ -139,6 +142,7 @@ is
      (F    : in out Formula;
       Lits : Literal_List;
       Len  : Clause_Length)
+   with SPARK_Mode => Off
    is
       C : Clause;
    begin
@@ -149,7 +153,8 @@ is
       Add_Clause (F, C);
    end Add_Clause_From_Literals;
 
-   procedure From_DIMACS_Lite (F : out Formula; Text : String) is
+   procedure From_DIMACS_Lite (F : out Formula; Text : String)
+   with SPARK_Mode => Off is
       use Ada.Characters.Handling;
 
       I     : Natural := Text'First;
@@ -287,6 +292,16 @@ is
    -- Clause / formula queries
    ---------------------------------------------------------------------
 
+   function Valid_Clause (C : Clause) return Boolean is
+   begin
+      for I in 1 .. C.Length loop
+         if C.Lits (I) = 0 then
+            return False;
+         end if;
+      end loop;
+      return True;
+   end Valid_Clause;
+
    function Clause_Is_Empty (C : Clause) return Boolean is
    begin
       return C.Length = 0;
@@ -295,7 +310,7 @@ is
    function Clause_Is_Satisfied (C : Clause; A : Assignment) return Boolean is
    begin
       for I in 1 .. C.Length loop
-         if Lit_Is_True (C.Lits (I), A) then
+         if C.Lits (I) /= 0 and then Lit_Is_True (C.Lits (I), A) then
             return True;
          end if;
       end loop;
@@ -308,7 +323,7 @@ is
          return True;
       end if;
       for I in 1 .. C.Length loop
-         if not Lit_Is_False (C.Lits (I), A) then
+         if C.Lits (I) = 0 or else not Lit_Is_False (C.Lits (I), A) then
             return False;
          end if;
       end loop;
@@ -323,7 +338,9 @@ is
          return 0;
       end if;
       for I in 1 .. C.Length loop
-         if Lit_Is_Unassigned (C.Lits (I), A) then
+         if C.Lits (I) = 0 then
+            return 0;
+         elsif Lit_Is_Unassigned (C.Lits (I), A) then
             Open_Count := Open_Count + 1;
             Open_Lit := C.Lits (I);
             if Open_Count > 1 then
@@ -451,6 +468,7 @@ is
      (F     : Formula;
       A     : Assignment;
       Pures : out Pure_List)
+   with SPARK_Mode => Off
    is
       type Polarity_Seen is (None, Pos_Only, Neg_Only, Both);
       Seen : array (Variable_Id) of Polarity_Seen := [others => None];
@@ -507,6 +525,7 @@ is
      (F        : Formula;
       A        : in out Assignment;
       Conflict : out Boolean)
+   with SPARK_Mode => Off
    is
       Pures : Pure_List;
       Ok    : Boolean;
@@ -535,6 +554,7 @@ is
 
    function Choose_Variable
      (F : Formula; A : Assignment) return Variable_Count
+   with SPARK_Mode => Off
    is
       Best : Variable_Count := 0;
       V    : Variable_Id;
@@ -565,6 +585,7 @@ is
      (F       : Formula;
       A       : in out Assignment;
       Success : out Boolean)
+   with SPARK_Mode => Off
    is
       Conflict : Boolean;
       V        : Variable_Count;
@@ -631,7 +652,8 @@ is
       Success := False;
    end DPLL_Search;
 
-   function Solve (F : Formula) return Solve_Result is
+   function Solve (F : Formula) return Solve_Result
+   with SPARK_Mode => Off is
       A       : Assignment := [others => Unassigned];
       Success : Boolean;
       R       : Solve_Result;
@@ -664,7 +686,8 @@ is
       return R;
    end Solve;
 
-   function Is_Satisfiable (F : Formula) return Boolean is
+   function Is_Satisfiable (F : Formula) return Boolean
+   with SPARK_Mode => Off is
       R : constant Solve_Result := Solve (F);
    begin
       return R.Status = Satisfiable;
@@ -674,7 +697,8 @@ is
    -- Classic examples
    ---------------------------------------------------------------------
 
-   procedure Build_Two_Clause_Sat (F : out Formula) is
+   procedure Build_Two_Clause_Sat (F : out Formula)
+   with SPARK_Mode => Off is
       C1, C2 : Clause;
    begin
       Clear (F);
@@ -685,7 +709,8 @@ is
       Add_Clause (F, C2);
    end Build_Two_Clause_Sat;
 
-   procedure Build_Contradictory_Units (F : out Formula) is
+   procedure Build_Contradictory_Units (F : out Formula)
+   with SPARK_Mode => Off is
       C1, C2 : Clause;
    begin
       Clear (F);
@@ -696,7 +721,8 @@ is
       Add_Clause (F, C2);
    end Build_Contradictory_Units;
 
-   procedure Build_Empty_Clause (F : out Formula) is
+   procedure Build_Empty_Clause (F : out Formula)
+   with SPARK_Mode => Off is
       C : Clause;
    begin
       Clear (F);
@@ -705,12 +731,14 @@ is
       Add_Clause (F, C);
    end Build_Empty_Clause;
 
-   procedure Build_Empty_Formula (F : out Formula) is
+   procedure Build_Empty_Formula (F : out Formula)
+   with SPARK_Mode => Off is
    begin
       Clear (F);
    end Build_Empty_Formula;
 
-   procedure Build_Small_3SAT_Sat (F : out Formula) is
+   procedure Build_Small_3SAT_Sat (F : out Formula)
+   with SPARK_Mode => Off is
       --  (x1 ∨ x2 ∨ x3) ∧ (¬x1 ∨ x2 ∨ ¬x3) ∧ (x1 ∨ ¬x2 ∨ x3)
       --  ∧ (¬x1 ∨ ¬x2 ∨ ¬x3)  — satisfiable e.g. x1=T,x2=T,x3=F
       C : Clause;
@@ -727,7 +755,8 @@ is
       Add_Clause (F, C);
    end Build_Small_3SAT_Sat;
 
-   procedure Build_Small_3SAT_Unsat (F : out Formula) is
+   procedure Build_Small_3SAT_Unsat (F : out Formula)
+   with SPARK_Mode => Off is
       --  All 8 possible 3-literal clauses over 3 vars → unsat
       --  (encodes forcing every truth assignment to hit a falsified clause).
       --  Compact unsat: (a)∧(¬a∨b)∧(¬b∨c)∧(¬c) unit-chains to conflict,
