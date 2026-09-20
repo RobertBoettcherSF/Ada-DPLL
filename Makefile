@@ -3,7 +3,7 @@ FLAGS   := -gnatwa -gnat2022
 OBJ_DIR := obj
 BIN_DIR := bin
 
-.PHONY: all test clean
+.PHONY: all test prove clean
 
 all: $(BIN_DIR)/tests
 
@@ -15,5 +15,9 @@ test: all
 	@echo "Running tests..."
 	@$(BIN_DIR)/tests
 
+prove:
+	mkdir -p $(OBJ_DIR)
+	gnatprove -Pdpll.gpr --level=2 --timeout=60 -j0
+
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR) gnatprove
